@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-const tourSchema = new mongoose.Schema({
+
+const tourSchema = new mongoose.Schema<mongoose.Document>({
   name: {
     type: String,
     required: [true, 'A tour must have a name'],
