@@ -42,7 +42,7 @@ const tourSchema = new Schema<Tour>({
   priceDiscount: {
     type: Number,
     validate: [
-      validator,
+      validationPriceDiscount,
       'Discount price ({VALUE}) should be below regular price',
     ],
   },
@@ -85,7 +85,7 @@ export interface Tour {
   startDates: [Date];
 }
 
-function validator(this: Tour, val: Number): boolean {
+function validationPriceDiscount(this: Tour, val: Number): boolean {
   // this only points to current doc on NEW document creation
   return val < this.price;
 }
