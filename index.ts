@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import { router as tourRouter } from './routes/tourRoutes';
 import { router as userRouter } from './routes/userRoutes';
+import AppError from './utils/appError';
+import { globalErrHandler } from './controllers/errorController';
 
 dotenv.config();
 
@@ -15,13 +17,14 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-  console.log('Hello from the middleware :D');
-  next();
-});
-
 // 3) Routers mouting
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+
+app.all('*', (req: Request, res: Response, next: NextFunction) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+app.use(globalErrHandler);
 
 //index.js mainly used for connecting our different middlewares
