@@ -8,10 +8,12 @@ export interface User {
   photo: String;
   password: String;
   passwordConfirm: String;
+  passwordChangedAt: Date;
 }
 
 interface UserDocument extends User, Document {
   correctPassword(candidatePassword: string, password: string): boolean;
+  changedPasswordAfter(JWTTimestamp: number): number;
 }
 
 // For model
@@ -45,6 +47,7 @@ const userSchema = new Schema<UserDocument, UserModel>({
     // This only works on CREATE and SAVE!!
     validate: [validatePassword, 'Passwords are not the same '],
   },
+  passwordChangedAt: Date,
 });
 
 userSchema.methods.correctPassword = async function (
@@ -53,6 +56,20 @@ userSchema.methods.correctPassword = async function (
 ) {
   //this.password not available cause of 'select' property
   return await bcrypt.compare(candidatePassword, this.password.toString());
+};
+
+userSchema.methods.changedPasswordAfter = function (
+  this: UserDocument,
+  JWTTimestamp: number
+) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      (this.passwordChangedAt.getTime() / 1000).toString(),
+      10
+    );
+
+    return JWTTimestamp < changedTimestamp;
+  }
 };
 
 userSchema.pre('save', async function (next) {

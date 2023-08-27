@@ -1,8 +1,14 @@
 import { NextFunction, Request, Response } from 'express';
-import catchAsync from '../utils/catchAsync';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { User } from '../models/userModel';
-import jwt from 'jsonwebtoken';
 import AppError from '../utils/appError';
+import catchAsync from '../utils/catchAsync';
+
+interface JWTUserPayload {
+  id: string;
+  iat: number;
+  exp: number;
+}
 
 const signToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET!, {
@@ -17,6 +23,7 @@ export const signup = catchAsync(
       email: req.body.email,
       password: req.body.password,
       passwordConfirm: req.body.passwordConfirm,
+      passwordChangedAt: req.body.passwordChangedAt,
     });
 
     const token = signToken(newUser._id);
@@ -58,5 +65,48 @@ export const login = catchAsync(
       status: 'success',
       token,
     });
+  }
+);
+
+export const protect = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (
+      !req.headers.authorization ||
+      !req.headers.authorization?.startsWith('Bearer') ||
+      req.headers.authorization.split(' ').length <= 1
+    ) {
+      return next(
+        new AppError('You are not logged in. Please log in to get access', 401)
+      );
+    }
+    const token = req.headers.authorization.split(' ')[1];
+    // 2) Verify token
+    const decoced: JWTUserPayload = jwt.verify(
+      token,
+      process.env.JWT_SECRET!
+    ) as JWTUserPayload;
+    console.log(decoced);
+
+    // 3) Check if user still exists
+    const user = await User.findById(decoced.id);
+    if (!user) {
+      return next(
+        new AppError(
+          'The user belonging to the token does no longer exist',
+          401
+        )
+      );
+    }
+
+    // 4) Check if user changed password after the token was issued
+    if (user.changedPasswordAfter(decoced.iat)) {
+      return next(
+        new AppError(
+          'The User recently changed password! Please log in again',
+          401
+        )
+      );
+    }
+    next();
   }
 );
