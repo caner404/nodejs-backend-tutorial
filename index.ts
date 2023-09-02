@@ -1,3 +1,4 @@
+import 'express-async-errors';
 import express, { Express, NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';

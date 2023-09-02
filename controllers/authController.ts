@@ -44,7 +44,10 @@ export const login = catchAsync(
 
     //1.) Check if email and password exits
     if (!email || !password) {
-      return next(new AppError('Please provide email and password', 400));
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please provide email and password',
+      });
     }
 
     // 2) Check if the user exit && password is correct
@@ -55,9 +58,10 @@ export const login = catchAsync(
     );
 
     if (!user || !correct) {
-      return next(
-        new AppError('Incorrect credentials (email or password)', 401)
-      );
+      return res.status(401).json({
+        status: 'error',
+        message: 'Incorrect credentials (email or password)',
+      });
     }
 
     const token = signToken(user._id);
