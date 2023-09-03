@@ -9,6 +9,8 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const morgan_1 = __importDefault(require("morgan"));
 const tourRoutes_1 = require("./routes/tourRoutes");
 const userRoutes_1 = require("./routes/userRoutes");
+const appError_1 = __importDefault(require("./utils/appError"));
+const errorController_1 = require("./controllers/errorController");
 dotenv_1.default.config();
 exports.app = (0, express_1.default)();
 //1. Midldewares
@@ -17,11 +19,11 @@ exports.app.use(express_1.default.json());
 if (process.env.NODE_ENV === 'development') {
     exports.app.use((0, morgan_1.default)('dev'));
 }
-exports.app.use((req, res, next) => {
-    console.log('Hello from the middleware :D');
-    next();
-});
 // 3) Routers mouting
 exports.app.use('/api/v1/tours', tourRoutes_1.router);
 exports.app.use('/api/v1/users', userRoutes_1.router);
+exports.app.all('*', (req, res, next) => {
+    next(new appError_1.default(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+exports.app.use(errorController_1.globalErrHandler);
 //index.js mainly used for connecting our different middlewares

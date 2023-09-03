@@ -16,7 +16,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const fs_1 = __importDefault(require("fs"));
 const tourModel_1 = require("../../models/tourModel");
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+dotenv_1.default.config({ path: '../../.env' });
 const db = process.env.DATABASE_LOCAL;
 mongoose_1.default
     .connect(db, {
@@ -26,7 +26,7 @@ mongoose_1.default
 })
     .then(() => console.log('Mongodb is connected!'));
 //Read JSON FILE
-const tours = JSON.parse(fs_1.default.readFileSync(`${__dirname}./tours-simple.json`, 'utf-8'));
+const tours = JSON.parse(fs_1.default.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8'));
 //IMPORT DATA INTO DATABASE
 const importData = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -36,6 +36,7 @@ const importData = () => __awaiter(void 0, void 0, void 0, function* () {
     catch (error) {
         console.log(error);
     }
+    process.exit();
 });
 //DELETE ALL DATA FROM COLLECTION
 const deleteData = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -46,5 +47,15 @@ const deleteData = () => __awaiter(void 0, void 0, void 0, function* () {
     catch (error) {
         console.log(error);
     }
+    process.exit();
 });
-console.log(process.argv);
+if (process.argv[2] === '--import') {
+    importData();
+}
+else if (process.argv[2] === '--delete') {
+    deleteData();
+}
+//PATH : /g/webdev/complete-node-bootcamp-master/4-natours/starter/dev-data/data
+//ts-node import-dev-data.ts --import
+//ts-node import-dev-data.ts --delete
+//start script in directory containing the currently executing file

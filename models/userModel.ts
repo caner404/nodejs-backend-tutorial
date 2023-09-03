@@ -1,6 +1,7 @@
 import { Model, Schema, model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 
 export interface User {
   name: String;
@@ -10,11 +11,14 @@ export interface User {
   role: String;
   passwordConfirm: String;
   passwordChangedAt: Date;
+  passwordResetToken: String;
+  passwordResetExpires: Date;
 }
 
 interface UserDocument extends User, Document {
   correctPassword(candidatePassword: string, password: string): boolean;
   changedPasswordAfter(JWTTimestamp: number): number;
+  createPasswordResetToken(): string;
 }
 
 // For model
@@ -54,6 +58,8 @@ const userSchema = new Schema<UserDocument, UserModel>({
     validate: [validatePassword, 'Passwords are not the same '],
   },
   passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
 });
 
 userSchema.methods.correctPassword = async function (
@@ -77,6 +83,23 @@ userSchema.methods.changedPasswordAfter = function (
     return JWTTimestamp < changedTimestamp;
   }
 };
+
+userSchema.methods.createPasswordResetToken = function (this: UserDocument) {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10minutes
+  return resetToken;
+};
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+  this.passwordChangedAt = new Date();
+  next();
+});
 
 userSchema.pre('save', async function (next) {
   //Only run function when password was actually changed
