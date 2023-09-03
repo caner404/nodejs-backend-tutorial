@@ -7,6 +7,7 @@ export interface User {
   email: String;
   photo: String;
   password: String;
+  role: String;
   passwordConfirm: String;
   passwordChangedAt: Date;
 }
@@ -35,6 +36,11 @@ const userSchema = new Schema<UserDocument, UserModel>({
     validate: [validator.isEmail, 'Please provide a valid email'],
   },
   photo: String,
+  role: {
+    type: String,
+    enum: ['user', 'guide', 'lead-guide', 'admin'],
+    default: 'user',
+  },
   password: {
     type: String,
     required: [true, 'Please provide a password'],
