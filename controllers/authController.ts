@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/userModel';
+import { User, UserModel } from '../models/userModel';
 import AppError from '../utils/appError';
 import catchAsync from '../utils/catchAsync';
 import { sendEmail } from '../utils/email';
@@ -18,20 +18,9 @@ const signToken = (id: string) => {
   });
 };
 
-/*
-const createSendToken = (user: UserDocument, statusCode: number, res: Response) => {
-  const token = signToken(user._id);
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN! * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-    secure: false,
-  };
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-
-  res.cookie('jwt', token, cookieOptions);
-
+const createSendToken = (user: any, statusCode: number, res: Response) => {
+  const token = signToken(user.id);
+  console.log('createSendToken', token);
   // Remove password from output
   user.password = undefined!;
 
@@ -43,7 +32,6 @@ const createSendToken = (user: UserDocument, statusCode: number, res: Response) 
     },
   });
 };
-*/
 
 export const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -55,15 +43,7 @@ export const signup = catchAsync(
       passwordChangedAt: req.body.passwordChangedAt,
     });
 
-    const token = signToken(newUser._id);
-
-    res.status(201).json({
-      status: 'success',
-      token,
-      data: {
-        user: newUser,
-      },
-    });
+    createSendToken(newUser, 201, res);
   }
 );
 
@@ -93,11 +73,7 @@ export const login = catchAsync(
       });
     }
 
-    const token = signToken(user._id);
-    res.status(200).json({
-      status: 'success',
-      token,
-    });
+    createSendToken(user, 200, res);
   }
 );
 
@@ -224,11 +200,26 @@ export const resetPassword = async (
   user.passwordResetExpires = undefined!;
   await user.save();
 
-  // 3) Update changedPasswordAt property for the user
-  // 4) Log the user in, send JWT
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 };
+
+export const updatePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return next(new AppError('User was not found', 404));
+    }
+    if (
+      !(await user.correctPassword(
+        req.body.passwordCurrent,
+        user.password.toString()
+      ))
+    ) {
+      return next(new AppError('Password is not correct', 404));
+    }
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    await user.save();
+    createSendToken(user, 200, res);
+  }
+);

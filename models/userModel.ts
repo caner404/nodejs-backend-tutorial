@@ -2,8 +2,10 @@ import { Model, Schema, model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
+import { NextFunction } from 'express';
 
 export interface User {
+  id: String;
   name: String;
   email: String;
   photo: String;
@@ -60,6 +62,11 @@ const userSchema = new Schema<UserDocument, UserModel>({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 userSchema.methods.correctPassword = async function (
@@ -95,18 +102,23 @@ userSchema.methods.createPasswordResetToken = function (this: UserDocument) {
   this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10minutes
   return resetToken;
 };
-userSchema.pre('save', function (next) {
+userSchema.pre('save', function (next: any) {
   if (!this.isModified('password') || this.isNew) return next();
   this.passwordChangedAt = new Date();
   next();
 });
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function (next: any) {
   //Only run function when password was actually changed
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password.toString(), 12);
   //required on schema only matters for input, not when brute forced onsave
   this.passwordConfirm = undefined!;
+});
+
+userSchema.pre(/^find/, function (this: UserModel, next: any) {
+  this.find({ active: { $ne: false } });
+  next();
 });
 
 function validatePassword(this: User, val: String) {
