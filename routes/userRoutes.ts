@@ -9,9 +9,14 @@ import {
   deleteCurrentUser,
 } from '../controllers/userController';
 import * as authController from '../controllers/authController';
+import { body } from 'express-validator';
 export const router = express.Router();
 
-router.post('/signup', authController.signup);
+router.post(
+  '/signup',
+  body(['name', 'email', 'password', 'passwordConfirm']).escape(),
+  authController.signup
+);
 router.post('/login', authController.login);
 
 router.post('/forgotPassword', authController.forgotPassword);

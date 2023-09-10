@@ -69,6 +69,7 @@ const tourSchema = new Schema<Tour>({
 });
 
 export interface Tour {
+  _id: String;
   name: String;
   duration: Number;
   maxGroupSize: Number;

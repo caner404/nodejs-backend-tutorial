@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User, UserModel } from '../models/userModel';
+import { User } from '../models/userModel';
 import AppError from '../utils/appError';
 import catchAsync from '../utils/catchAsync';
 import { sendEmail } from '../utils/email';
@@ -20,10 +20,19 @@ const signToken = (id: string) => {
 
 const createSendToken = (user: any, statusCode: number, res: Response) => {
   const token = signToken(user.id);
-  console.log('createSendToken', token);
+  const cookieOption = {
+    expires: new Date(
+      Date.now() +
+        Number(process.env.JWT_COOKIE_EXPIRES_IN!) * 24 * 60 * 60 * 1000 //convert to miliseconds -> 90days
+    ),
+    secure: false,
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') cookieOption.secure = true;
+  res.cookie('jwt', token, cookieOption);
+
   // Remove password from output
   user.password = undefined!;
-
   res.status(statusCode).json({
     status: 'success',
     token,

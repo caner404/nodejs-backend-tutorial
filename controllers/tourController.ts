@@ -3,6 +3,7 @@ import { Tour } from '../models/tourModel';
 import APIFeatures from '../utils/apiFeatures';
 import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/appError';
+import { Mongoose } from 'mongoose';
 
 export const alliasTopTours = (
   req: Request,

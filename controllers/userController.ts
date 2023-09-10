@@ -16,7 +16,7 @@ function filterRequestBody(
   return filteredRequestBody;
 }
 
-exports.getAllUsers = catchAsync(
+export const getAllUsers = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const users = await User.find();
 
