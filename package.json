@@ -7,7 +7,8 @@
     "build": "npx tsc",
     "start:prod": "set NODE_ENV=production&& ts-node-dev ./server.ts",
     "start": "set NODE_ENV=development&& ts-node-dev ./server.ts",
-    "test": "jest "
+    "test": "jest ",
+    "test:watch": "jest --watchAll --detectOpenHandles"
   },
   "author": "Caner Iskenderoglu",
   "license": "ISC",

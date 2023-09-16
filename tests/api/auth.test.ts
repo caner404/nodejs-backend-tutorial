@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { app } from '../..';
 import request from 'supertest';
 import { User } from '../../models/userModel';
+import 'express-async-errors';
 
 const db = process.env.DATABASE_LOCAL_TEST!;
 
@@ -43,7 +44,7 @@ describe('POST users/login', () => {
     });
 
     expect(res.statusCode).toBe(400);
-    expect(res.body.status).toBe('error');
+    expect(res.body.status).toBe('fail');
     expect(res.body.message).toBe('Please provide email and password');
   });
 
@@ -61,7 +62,7 @@ describe('POST users/login', () => {
     });
 
     expect(res.statusCode).toBe(401);
-    expect(res.body.status).toBe('error');
+    expect(res.body.status).toBe('fail');
     expect(res.body.message).toBe('Incorrect credentials (email or password)');
     User.deleteMany({});
   });
@@ -80,7 +81,7 @@ describe('POST users/login', () => {
     });
 
     expect(res.statusCode).toBe(401);
-    expect(res.body.status).toBe('error');
+    expect(res.body.status).toBe('fail');
     expect(res.body.message).toBe('Incorrect credentials (email or password)');
     User.deleteMany({});
   });

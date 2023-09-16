@@ -42,8 +42,12 @@ const createSendToken = (user: any, statusCode: number, res: Response) => {
   });
 };
 
-export const signup = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+export const signup = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
     const newUser = await User.create({
       name: req.body.name,
       email: req.body.email,
@@ -53,8 +57,10 @@ export const signup = catchAsync(
     });
 
     createSendToken(newUser, 201, res);
+  } catch (error) {
+    next(error);
   }
-);
+};
 
 export const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -62,10 +68,7 @@ export const login = catchAsync(
 
     //1.) Check if email and password exits
     if (!email || !password) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Please provide email and password',
-      });
+      return next(new AppError('Please provide email and password', 400));
     }
 
     // 2) Check if the user exit && password is correct
@@ -76,10 +79,9 @@ export const login = catchAsync(
     );
 
     if (!user || !correct) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Incorrect credentials (email or password)',
-      });
+      return next(
+        new AppError('Incorrect credentials (email or password)', 401)
+      );
     }
 
     createSendToken(user, 200, res);
