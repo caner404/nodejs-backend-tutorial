@@ -1,4 +1,56 @@
 import mongoose, { Schema } from 'mongoose';
+import { IUser } from './userModel';
+
+export interface Locations {
+  type: string;
+  coordinates: [number];
+  address: string;
+  description: string;
+  day: number;
+}
+
+const locationsSchema = new Schema<Locations>({
+  type: {
+    type: String,
+    default: 'Point',
+    enum: ['Point'],
+  },
+  coordinates: [Number],
+  address: String,
+  description: String,
+  day: {
+    type: Number,
+    default: 0,
+  },
+});
+
+export interface Tour {
+  _id: string;
+  name: string;
+  duration: number;
+  maxGroupSize: number;
+  difficulty: string;
+  ratingsAverage: number;
+  ratingsQuantity: number;
+  price: number;
+  priceDiscount: number;
+  summary: string;
+  description: string;
+  imageCover: string;
+  images: string;
+  createdAt: Date;
+  startDates: [Date];
+  //guideIds: [string];
+  //guides: IUser[] |string[];
+  guides: IUser[];
+  startLocation: Locations;
+  locations: Locations[];
+}
+
+function validationPriceDiscount(this: Tour, val: number): boolean {
+  // this only points to current doc on NEW document creation
+  return val < this.price;
+}
 
 const tourSchema = new Schema<Tour>({
   name: {
@@ -66,29 +118,48 @@ const tourSchema = new Schema<Tour>({
     select: false, //hide from api returns
   },
   startDates: [Date],
+  /*
+  if there will be problems with guides mixed type, this works too
+  guideIds: {
+    type: [String],
+    select: false, //hide from api returns
+  },
+  */
+  //guides: Schema.Types.Mixed, embedding
+  guides: [
+    {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'User',
+    },
+  ],
+  startLocation: locationsSchema,
+  locations: [locationsSchema],
 });
 
-export interface Tour {
-  _id: String;
-  name: String;
-  duration: Number;
-  maxGroupSize: Number;
-  difficulty: String;
-  ratingsAverage: Number;
-  ratingsQuantity: Number;
-  price: Number;
-  priceDiscount: Number;
-  summary: String;
-  description: String;
-  imageCover: String;
-  images: String;
-  createdAt: Date;
-  startDates: [Date];
-}
+tourSchema.pre(/^find/, function (next) {
+  //this always points to the current query in middleware
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangeAt', //filter out those fields of Users
+  }); // find all guides with the corresponding ObjectId
+  next();
+});
 
-function validationPriceDiscount(this: Tour, val: Number): boolean {
-  // this only points to current doc on NEW document creation
-  return val < this.price;
-}
+/*
+
+tourSchema.pre('save', async function (next: any) {
+  const guidePromises = this.guides.map((guide) => {
+    return typeof guide === 'string'
+      ? User.findById(guide)
+      : User.findById(guide.id);
+  });
+  const guidesResolved = await Promise.all(guidePromises);
+  this.guides = guidesResolved.filter((guide) => guide !== null) as
+    | IUser[]
+    | string[];
+  next();
+});
+
+*/
 
 export const Tour = mongoose.model<Tour>('Tour', tourSchema);

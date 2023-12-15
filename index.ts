@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import { router as tourRouter } from './routes/tourRoutes';
 import { router as userRouter } from './routes/userRoutes';
+import { router as reviewRouter } from './routes/reviewRoutes';
 import AppError from './utils/appError';
 import { globalErrHandler } from './controllers/errorController';
 import { rateLimit } from 'express-rate-limit';
@@ -50,6 +51,7 @@ app.use('/api', limiter);
 // 3) Routers mouting
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

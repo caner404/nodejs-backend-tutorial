@@ -1,10 +1,9 @@
-import { Model, Schema, model } from 'mongoose';
-import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
-import { NextFunction } from 'express';
+import { Model, Schema, model } from 'mongoose';
+import validator from 'validator';
 
-export interface User {
+export interface IUser {
   id: String;
   name: String;
   email: String;
@@ -17,7 +16,7 @@ export interface User {
   passwordResetExpires: Date;
 }
 
-interface UserDocument extends User, Document {
+interface UserDocument extends IUser, Document {
   correctPassword(candidatePassword: string, password: string): boolean;
   changedPasswordAfter(JWTTimestamp: number): number;
   createPasswordResetToken(): string;
@@ -26,7 +25,7 @@ interface UserDocument extends User, Document {
 // For model
 export interface UserModel extends Model<UserDocument> {}
 
-const userSchema = new Schema<UserDocument, UserModel>({
+export const userSchema = new Schema<UserDocument, UserModel>({
   name: {
     type: String,
     required: [true, 'A user must have a name'],
@@ -121,7 +120,7 @@ userSchema.pre(/^find/, function (this: UserModel, next: any) {
   next();
 });
 
-function validatePassword(this: User, val: String) {
+function validatePassword(this: IUser, val: String) {
   return val === this.password;
 }
 export const User = model<UserDocument, UserModel>('User', userSchema);

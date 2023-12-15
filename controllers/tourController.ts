@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { Tour } from '../models/tourModel';
 import APIFeatures from '../utils/apiFeatures';
-import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/appError';
-import { Mongoose } from 'mongoose';
+import catchAsync from '../utils/catchAsync';
 
 export const alliasTopTours = (
   req: Request,
@@ -38,7 +37,10 @@ export const getAllTours = catchAsync(
 
 export const getTour = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const tour = await Tour.findById(req.params.id);
+    const tour = await Tour.findById(req.params.id).populate({
+      path: 'guides',
+      select: '-__v -passwordChangeAt', //filter out those fields of Users
+    }); // find all guides with the corresponding ObjectId
 
     if (!tour) {
       return next(new AppError('No tour found with that ID', 404));
