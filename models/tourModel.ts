@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from './userModel';
 
 export interface Locations {
@@ -24,7 +24,7 @@ const locationsSchema = new Schema<Locations>({
   },
 });
 
-export interface Tour {
+export interface Tour extends Document {
   _id: string;
   name: string;
   duration: number;
@@ -52,88 +52,105 @@ function validationPriceDiscount(this: Tour, val: number): boolean {
   return val < this.price;
 }
 
-const tourSchema = new Schema<Tour>({
-  name: {
-    type: String,
-    required: [true, 'A tour must have a name'],
-    unique: true,
-    trim: true,
-    maxlength: [40, 'A tour name must have less or equal then 40 characters'],
-    minlength: [10, 'A tour name must have more or equal then 10 characters'],
-  },
-  duration: {
-    type: Number,
-    required: [true, 'A tour must have a duration'],
-  },
-  maxGroupSize: {
-    type: Number,
-    required: [true, 'A tour must have a group size'],
-  },
-  difficulty: {
-    type: String,
-    required: [true, 'A tour must have a difficulty'],
-    enum: {
-      values: ['easy', 'medium', 'difficult'],
-      message: 'Difficulty is either: easy, medium, difficult',
+const tourSchema = new Schema<Tour>(
+  {
+    name: {
+      type: String,
+      required: [true, 'A tour must have a name'],
+      unique: true,
+      trim: true,
+      maxlength: [40, 'A tour name must have less or equal then 40 characters'],
+      minlength: [10, 'A tour name must have more or equal then 10 characters'],
     },
-  },
-  ratingsAverage: {
-    type: Number,
-    default: 4.5,
-    min: [1, 'Rating must be above 1.0'],
-    max: [5, 'Rating must be below 5.0'],
-  },
-  ratingsQuantity: {
-    type: Number,
-    default: 0,
-  },
-  price: {
-    type: Number,
-    required: [true, 'A tour must have a price'],
-  },
-  priceDiscount: {
-    type: Number,
-    validate: [
-      validationPriceDiscount,
-      'Discount price ({VALUE}) should be below regular price',
-    ],
-  },
-  summary: {
-    type: String,
-    required: [true, 'A tour must have a description'],
-    trim: true,
-  },
-  description: {
-    type: String,
-    trim: true,
-  },
-  imageCover: {
-    type: String,
-    required: [true, 'A tour must have a cover image'],
-  },
-  images: [String],
-  createdAt: {
-    type: Date,
-    default: Date.now(),
-    select: false, //hide from api returns
-  },
-  startDates: [Date],
-  /*
+    duration: {
+      type: Number,
+      required: [true, 'A tour must have a duration'],
+    },
+    maxGroupSize: {
+      type: Number,
+      required: [true, 'A tour must have a group size'],
+    },
+    difficulty: {
+      type: String,
+      required: [true, 'A tour must have a difficulty'],
+      enum: {
+        values: ['easy', 'medium', 'difficult'],
+        message: 'Difficulty is either: easy, medium, difficult',
+      },
+    },
+    ratingsAverage: {
+      type: Number,
+      default: 4.5,
+      min: [1, 'Rating must be above 1.0'],
+      max: [5, 'Rating must be below 5.0'],
+    },
+    ratingsQuantity: {
+      type: Number,
+      default: 0,
+    },
+    price: {
+      type: Number,
+      required: [true, 'A tour must have a price'],
+    },
+    priceDiscount: {
+      type: Number,
+      validate: [
+        validationPriceDiscount,
+        'Discount price ({VALUE}) should be below regular price',
+      ],
+    },
+    summary: {
+      type: String,
+      required: [true, 'A tour must have a description'],
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    imageCover: {
+      type: String,
+      required: [true, 'A tour must have a cover image'],
+    },
+    images: [String],
+    createdAt: {
+      type: Date,
+      default: Date.now(),
+      select: false, //hide from api returns
+    },
+    startDates: [Date],
+    /*
   if there will be problems with guides mixed type, this works too
   guideIds: {
     type: [String],
     select: false, //hide from api returns
   },
   */
-  //guides: Schema.Types.Mixed, embedding
-  guides: [
-    {
-      type: mongoose.SchemaTypes.ObjectId,
-      ref: 'User',
-    },
-  ],
-  startLocation: locationsSchema,
-  locations: [locationsSchema],
+    //guides: Schema.Types.Mixed, embedding
+    guides: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User',
+      },
+    ],
+    startLocation: locationsSchema,
+    locations: [locationsSchema],
+  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+tourSchema.virtual('durationWeeks').get(function (this: Tour) {
+  return this.duration / 7;
+});
+
+//virtual populate the reviews for a tour
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
 });
 
 tourSchema.pre(/^find/, function (next) {

@@ -44,6 +44,7 @@ const reviewSchema = new Schema<IReview>(
 );
 
 reviewSchema.pre<Query<IReview, null>>(/^find/, function (next: any) {
+  /*
   this.populate([
     {
       path: 'user',
@@ -55,6 +56,14 @@ reviewSchema.pre<Query<IReview, null>>(/^find/, function (next: any) {
     },
   ]).select('-__v');
 
+  */
+
+  this.populate([
+    {
+      path: 'user',
+      select: 'name',
+    },
+  ]);
   next();
 });
 
