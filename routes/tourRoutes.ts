@@ -10,8 +10,11 @@ import {
   getMonthlyPlan,
 } from '../controllers/tourController';
 import * as authController from '../controllers/authController';
+import { router as reviewRotuer } from './reviewRoutes';
 
 export const router = express.Router();
+
+router.use('/:tourId/reviews', reviewRotuer);
 
 router.route('/top5-cheap').get(alliasTopTours, getAllTours);
 router.route('/tour-stats').get(getTourStats);
