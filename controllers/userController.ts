@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import AppError from '../utils/appError';
 import catchAsync from '../utils/catchAsync';
 import { User } from '../models/userModel';
+import factory from './handlerFactory';
 
 function filterRequestBody(
   reqBody: Record<string, any>,
@@ -16,44 +17,14 @@ function filterRequestBody(
   return filteredRequestBody;
 }
 
-export const getAllUsers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const users = await User.find();
+export const getAllUsers = factory.getAll(User);
+export const deleteUser = factory.deleteOne(User);
+export const getUser = factory.getOne(User);
+export const updateUser = factory.updateOne(User);
 
-    // SEND RESPONSE
-    res.status(200).json({
-      status: 'success',
-      results: users.length,
-      data: {
-        users,
-      },
-    });
-  }
-);
-
-export const deleteUser = (req: Request, res: Response) => {
-  res.status(500).send({
-    status: 'error',
-    message: 'This route is not yet defined!',
-  });
-};
-export const createUser = (req: Request, res: Response) => {
-  res.status(500).send({
-    status: 'error',
-    message: 'This route is not yet defined!',
-  });
-};
-export const getUser = (req: Request, res: Response) => {
-  res.status(500).send({
-    status: 'error',
-    message: 'This route is not yet defined!',
-  });
-};
-export const updateUser = (req: Request, res: Response) => {
-  res.status(500).send({
-    status: 'error',
-    message: 'This route is not yet defined!',
-  });
+export const getMe = (req: Request, res: Response, next: NextFunction) => {
+  req.params.id = req.user.id;
+  next();
 };
 
 export const updateCurrentUser = catchAsync(

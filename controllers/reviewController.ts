@@ -1,34 +1,19 @@
-import catchAsync from '../utils/catchAsync';
-import { Review } from '../models/reviewModel';
 import { NextFunction, Request, Response } from 'express';
+import { Review } from '../models/reviewModel';
+import factory from './handlerFactory';
 
-export const getAllReviews = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    let filter = {};
-    if (req.params.tourId) filter = { tour: req.params.tourId };
-    const reviews = await Review.find(filter);
+export const setTourAndUserIds = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.body.tour) req.body.tour = req.params.tourId;
+  if (!req.body.user) req.body.user = req.user._id;
+  next();
+};
 
-    res.status(200).json({
-      status: 'success',
-      results: reviews.length,
-      data: {
-        reviews,
-      },
-    });
-  }
-);
-
-export const createReview = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    //allow nested routes
-    if (!req.body.tour) req.body.tour = req.params.tourId;
-    if (!req.body.user) req.body.user = req.user._id;
-    const newReview = await Review.create(req.body);
-    res.status(201).json({
-      status: 'success',
-      data: {
-        review: newReview,
-      },
-    });
-  }
-);
+export const getAllReviews = factory.getAll(Review);
+export const getReview = factory.getOne(Review);
+export const createReview = factory.createOne(Review);
+export const deleteReview = factory.deleteOne(Review);
+export const updateReview = factory.updateOne(Review);

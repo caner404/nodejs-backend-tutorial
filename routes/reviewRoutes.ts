@@ -1,6 +1,13 @@
 import express from 'express';
-import { getAllReviews, createReview } from '../controllers/reviewController';
 import * as authController from '../controllers/authController';
+import {
+  createReview,
+  deleteReview,
+  getAllReviews,
+  getReview,
+  setTourAndUserIds,
+  updateReview,
+} from '../controllers/reviewController';
 
 // each router only has access to his own params
 //set mergeParams true so we can access the tourId from the parent router.
@@ -13,5 +20,12 @@ export const router = express.Router({ mergeParams: true });
 
 router
   .route('/')
-  .get(authController.protect, authController.restrictTo('user'), getAllReviews)
-  .post(createReview);
+  .get(getAllReviews)
+  .post(
+    authController.protect,
+    authController.restrictTo('user'),
+    setTourAndUserIds,
+    createReview
+  );
+
+router.route('/:id').delete(deleteReview).patch(updateReview).get(getReview);
